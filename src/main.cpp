@@ -59,8 +59,12 @@ struct Pts_point {
 void e57_to_pts(std::string const& input_filename,
                 std::string const& output_filename,
                 bool const do_possible_filter) {
+    fmt::print("Where we started: {} {}\n", input_filename, output_filename);
     e57::ImageFile imf{input_filename, "r"};
     e57::StructureNode root = imf.root();
+
+    fmt::print(
+      "Did I get here at all? {} {}\n", input_filename, output_filename);
 
     if (!root.isDefined("data3D")) {
         throw std::runtime_error{
@@ -269,7 +273,20 @@ int main(int argc, char* argv[]) {
               fmt::format("{} is not a directory", directory)};
         }
 
-        // point_cloud_converter::e57_to_pts(argv[1], argv[2], true);
+        for (auto const& entry : fs::directory_iterator{directory_path}) {
+            auto const input_file_path = entry.path();
+            if (fs::is_regular_file(input_file_path) &&
+                input_file_path.extension() == ".e57") {
+                fmt::print("Input file: {}\n",
+                           input_file_path.filename().string());
+
+                auto output_file_path = input_file_path;
+                output_file_path.replace_extension(".pts");
+
+                point_cloud_converter::e57_to_pts(
+                  input_file_path.string(), output_file_path.string(), true);
+            }
+        }
     } catch (std::exception const& exc) {
         std::cerr << "EXCEPTION: " << exc.what() << std::endl;
         return -1;

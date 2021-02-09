@@ -30,17 +30,21 @@ conan_cmake_run(CONANFILE conanfile.txt
                 BUILD missing)
 include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 
+set(USING_STATIC_XERCES ON CACHE BOOL "")
+set(E57_BUILD_SHARED OFF CACHE BOOL "")
 add_subdirectory(third_party)
 
 find_package(fmt REQUIRED)
 find_package(indicators REQUIRED)
+find_package(cxxopts REQUIRED)
 
 add_executable(e57_to_pts src/main.cpp)
-target_link_libraries(e57_to_pts 
-    PUBLIC 
-    E57Format 
-    fmt::fmt 
+target_link_libraries(e57_to_pts
+    PUBLIC
+    E57Format
+    fmt::fmt
     indicators::indicators
+    cxxopts::cxxopts
 )
 
 

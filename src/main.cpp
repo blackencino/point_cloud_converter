@@ -1,6 +1,6 @@
-
 #include <E57Format.h>
 #include <fmt/format.h>
+#include <cxxopts.hpp>
 #include <indicators/cursor_control.hpp>
 #include <indicators/indeterminate_progress_bar.hpp>
 #include <indicators/progress_bar.hpp>
@@ -10,11 +10,14 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <thread>
+
+namespace fs = std::filesystem;
 
 namespace point_cloud_converter {
 
@@ -159,10 +162,9 @@ void e57_to_pts(std::string const& input_filename,
         add_uint8("colorGreen", offsetof(Pts_point, color_g), false);
         add_uint8("colorBlue", offsetof(Pts_point, color_b), false);
 
-        if (do_possible_filter,
+        if (do_possible_filter &&
             prototype.isDefined("cartesianInvalidState") &&
-              prototype.get("cartesianInvalidState").type() ==
-                e57::E57_INTEGER) {
+            prototype.get("cartesianInvalidState").type() == e57::E57_INTEGER) {
             source_dest_buffers.emplace_back(imf,
                                              "cartesianInvalidState",
                                              cartesian_invalid_state.data(),
@@ -232,13 +234,42 @@ void e57_to_pts(std::string const& input_filename,
 }  // namespace point_cloud_converter
 
 int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        std::cout << "USAGE: " << argv[0] << " <blah.e57> <blah.pts>"
-                  << std::endl;
-        return -2;
-    }
+    std::string directory = "/usr/local/pcc";
     try {
-        point_cloud_converter::e57_to_pts(argv[1], argv[2], true);
+        // clang-format off
+        cxxopts::Options options{argv[0],
+            " - Point Cloud Converter. "
+            "Converts every .e57 file to the same named .pts file."};
+        options
+            //.allow_unrecognised_options()
+            .add_options()
+            ("dir", "directory in which to convert all .e57 files",
+             cxxopts::value<std::string>(directory)
+             ->default_value(directory))
+
+            ("help", "Print help")
+            ;
+        // clang-format on
+
+        auto result = options.parse(argc, argv);
+
+        if (result.count("help")) {
+            fmt::print("{}\n", options.help({""}));
+            return 0;
+        }
+    } catch (const cxxopts::OptionException& e) {
+        fmt::print(stderr, "Error parsing options: {}\n", e.what());
+        return -1;
+    }
+
+    try {
+        fs::path directory_path{directory};
+        if (!fs::is_directory(directory_path)) {
+            throw std::runtime_error{
+              fmt::format("{} is not a directory", directory)};
+        }
+
+        // point_cloud_converter::e57_to_pts(argv[1], argv[2], true);
     } catch (std::exception const& exc) {
         std::cerr << "EXCEPTION: " << exc.what() << std::endl;
         return -1;

@@ -46,5 +46,7 @@ target_link_libraries(e57_to_pts
     indicators::indicators
     cxxopts::cxxopts
 )
+install(TARGETS e57_to_pts)
+
 
 

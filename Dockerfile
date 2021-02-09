@@ -19,16 +19,26 @@ RUN apt-get update && \
 
 RUN pip3 install conan
 
-RUN mkdir /pcc && \
-    mkdir /pcc_build
+RUN mkdir /pcc_source && \
+    mkdir /pcc_build && \
+    mkdir /pcc
 
-COPY src /pcc/src
-COPY third_party /pcc/third_party
-COPY CMakeLists.txt /pcc
-COPY conanfile.txt /pcc 
+RUN echo "blah3"
+
+COPY src /pcc_source/src
+COPY third_party /pcc_source/third_party
+COPY CMakeLists.txt /pcc_source
+COPY conanfile.txt /pcc_source
 
 RUN cd /pcc_build && \
-  cmake -DCMAKE_BUILD_TYPE=Release -GNinja /pcc && \
-  ninja
+  cmake -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/pcc \
+        -GNinja /pcc_source && \
+  ninja install
 
-CMD [ "/bin/bash" ]
+RUN rm -rf /pcc_build && \
+    rm -rf /pcc_source
+
+RUN conan remove "*" -s -b -f
+
+CMD [ "/pcc/bin/e57_to_pts" ]

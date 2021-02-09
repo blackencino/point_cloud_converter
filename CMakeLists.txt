@@ -10,6 +10,9 @@ project( point_cloud_converter
         0.0.1
 )
 
+set(CMAKE_CXX_STANDARD	17)
+set(CMAKE_CXX_EXTENSIONS	OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 message(STATUS "about to do conan cmake download")
 
@@ -25,10 +28,19 @@ message(STATUS "about to do conan cmake run")
 conan_cmake_run(CONANFILE conanfile.txt
                 BASIC_SETUP
                 BUILD missing)
+include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 
 add_subdirectory(third_party)
 
+find_package(fmt REQUIRED)
+find_package(indicators REQUIRED)
+
 add_executable(e57_to_pts src/main.cpp)
-target_link_libraries(e57_to_pts PUBLIC E57Format)
+target_link_libraries(e57_to_pts 
+    PUBLIC 
+    E57Format 
+    fmt::fmt 
+    indicators::indicators
+)
 
 
